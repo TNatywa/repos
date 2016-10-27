@@ -125,7 +125,7 @@ class AgentWorker extends Thread {
 	agentHolder parentAgentHolder; //TODO: Come back to this after you see rest of code
 	int localPort; //which port is being used
 
-	AgentWorker (Socket s, int prt, agentHolder ah) { //Create a constructor for the worker 
+	AgentWorker (Socket s, int prt, agentHolder ah) { //Create a constructor for the worker
 		sock = s;
 		localPort = prt;
 		parentAgentHolder = ah;
@@ -135,47 +135,43 @@ class AgentWorker extends Thread {
 		//initialize variables
 		PrintStream out = null;
 		BufferedReader in = null;
-		//server is hardcoded in, only acceptable for this basic implementation
+		//server is hardcoded in, if I decide to work on an distributed intelligent agent with a classmate I should change this to my ip
 		String NewHost = "localhost";
 		//port the main worker will run on
-		int NewHostMainPort = 1565;
-		String buf = "";
-		int newPort;
-		Socket clientSock;
-		BufferedReader fromHostServer;
-		PrintStream toHostServer;
+		int NewHostMainPort = 1565; //starting at port 1565
+		String buf = ""; //Start out with nothing in the buffer
+		int newPort; //initialize a new port. I think later in here new port will always be incremented by 1 from old port
+		Socket clientSock; //initialize another socket for the client
+		BufferedReader fromHostServer; //We will use this variable as our input
+		PrintStream toHostServer; // we will use this variable as our output
 
 		try {
 			out = new PrintStream(sock.getOutputStream());
 			in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 
-			//read a line from the client
-			String inLine = in.readLine();
+			String inLine = in.readLine(); //TODO: can we do this better? read a line from the client
 			//to allow for usage on non-ie browsers, I had to accurately determine the content
 			//length and as a result need to build the html response so i can determine its length.
-			StringBuilder htmlString = new StringBuilder();
+			StringBuilder htmlString = new StringBuilder(); //create a string builder for the HTML string
 
-			//log a request
+			//TODO: use logger instead of system.out.println
 			System.out.println();
 			System.out.println("Request line: " + inLine);
 
 			if(inLine.indexOf("migrate") > -1) {
-				//the supplied request contains migrate, switch the user to a new port
+				//TODO: come back to this. the supplied request contains migrate, switch the user to a new port
 
-				//create a new socket with the main server waiting on 1565
-				clientSock = new Socket(NewHost, NewHostMainPort);
+				clientSock = new Socket(NewHost, NewHostMainPort); //create a new socket at port 1565
 				fromHostServer = new BufferedReader(new InputStreamReader(clientSock.getInputStream()));
-				//send a request to port 1565 to receive the next open port
 				toHostServer = new PrintStream(clientSock.getOutputStream());
 				toHostServer.println("Please host me. Send my port! [State=" + parentAgentHolder.agentState + "]");
 				toHostServer.flush();
 
 				//wait for the response and read a response until we find what should be a port
-				for(;;) {
-					//read the line and check it for what looks to be a valid port
-					buf = fromHostServer.readLine();
-					if(buf.indexOf("[Port=") > -1) {
-						break;
+				for(;;) { //loop indefinitely
+					buf = fromHostServer.readLine(); //getting valid port from host server
+					if(buf.indexOf("[Port=") > -1) { //if you retrieved something valid then set it's port to whatever you received
+						break; //port has now been set so break out of the loop
 					}
 				}
 
@@ -183,7 +179,7 @@ class AgentWorker extends Thread {
 				String tempbuf = buf.substring( buf.indexOf("[Port=")+6, buf.indexOf("]", buf.indexOf("[Port=")) );
 				//parse the response for the integer containing the new port
 				newPort = Integer.parseInt(tempbuf);
-				//log it to the server console
+				//TODO: Logger
 				System.out.println("newPort is: " + newPort);
 
 				//prepare the html response to send the user
@@ -194,7 +190,7 @@ class AgentWorker extends Thread {
 				//finish html
 				htmlString.append(AgentListener.sendHTMLsubmit());
 
-				//log that we are killing the waiting server at the port
+				//TODO: Logger
 				System.out.println("Killing parent listening loop.");
 				//grab the socket at the old port(stored in the parentAgentHolder)
 				ServerSocket ss = parentAgentHolder.sock;
