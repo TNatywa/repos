@@ -125,8 +125,7 @@ class AgentWorker extends Thread {
 	agentHolder parentAgentHolder; //TODO: Come back to this after you see rest of code
 	int localPort; //which port is being used
 
-	//basic constructor
-	AgentWorker (Socket s, int prt, agentHolder ah) {
+	AgentWorker (Socket s, int prt, agentHolder ah) { //Create a constructor for the worker 
 		sock = s;
 		localPort = prt;
 		parentAgentHolder = ah;
