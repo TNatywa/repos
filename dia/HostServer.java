@@ -91,6 +91,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.logging.Logger;
 /**
  * HostServer Notes: This went pretty smoothly for me, although I did have to edit the HTML functions
  * to get an accurate content length so things would be compatible with browsers other than IE. I also modified
@@ -112,9 +113,12 @@ import java.net.Socket;
  */
 
 	// My Notes
-	//
-	// TODO:
-	// TODO:
+	// Thanks to John Reagan for the original code
+
+	// My modifications are below:
+	// 		-Modified this to use Logger instead of System.out.print.ln. This way I can come back to the older log files
+	//		-Created a new method to get line number which was included for my calls to logger
+	// TODO:Add modifications
 	//
 
 
@@ -124,6 +128,8 @@ class AgentWorker extends Thread {
 	Socket sock; //Create a socket called sock so we can connect
 	agentHolder parentAgentHolder; //TODO: Come back to this after you see rest of code
 	int localPort; //which port is being used
+	Logger logger = Logger.getLogger("serverlog"); //declares a serverlog
+	FileHandler logFile; //intializes a FileHandler for logs
 
 	AgentWorker (Socket s, int prt, agentHolder ah) { //Create a constructor for the worker
 		sock = s;
@@ -145,6 +151,7 @@ class AgentWorker extends Thread {
 		BufferedReader fromHostServer; //We will use this variable as our input
 		PrintStream toHostServer; // we will use this variable as our output
 
+
 		try {
 			out = new PrintStream(sock.getOutputStream());
 			in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
@@ -154,9 +161,7 @@ class AgentWorker extends Thread {
 			//length and as a result need to build the html response so i can determine its length.
 			StringBuilder htmlString = new StringBuilder(); //create a string builder for the HTML string
 
-			//TODO: use logger instead of system.out.println
-			System.out.println();
-			System.out.println("Request line: " + inLine);
+			logger.info(String.format("{%d}: %s", getLineNumber(), "Request line: " + inLine);
 
 			if(inLine.indexOf("migrate") > -1) {
 				//TODO: come back to this. the supplied request contains migrate, switch the user to a new port
@@ -180,7 +185,7 @@ class AgentWorker extends Thread {
 				//parse the response for the integer containing the new port
 				newPort = Integer.parseInt(tempbuf);
 				//TODO: Logger
-				System.out.println("newPort is: " + newPort);
+				logger.info(String.format("{%d}: %s", getLineNumber(),"newPort is: " + newPort);
 
 				//prepare the html response to send the user
 				htmlString.append(AgentListener.sendHTMLheader(newPort, NewHost, inLine));
@@ -191,7 +196,7 @@ class AgentWorker extends Thread {
 				htmlString.append(AgentListener.sendHTMLsubmit());
 
 				//TODO: Logger
-				System.out.println("Killing parent listening loop.");
+				logger.info(String.format("{%d}: %s", getLineNumber(),"Killing parent listening loop.");
 				//grab the socket at the old port(stored in the parentAgentHolder)
 				ServerSocket ss = parentAgentHolder.sock;
 				//close the port
@@ -223,7 +228,7 @@ class AgentWorker extends Thread {
 
 
 		} catch (IOException ioe) {
-			System.out.println(ioe);
+			logger.info(String.format("{%d}: %s", getLineNumber(),ioe);
 		}
 	}
 
@@ -265,7 +270,7 @@ class AgentListener extends Thread {
 		BufferedReader in = null;
 		PrintStream out = null;
 		String NewHost = "localhost";
-		System.out.println("In AgentListener Thread");
+		logger.info(String.format("{%d}: %s", getLineNumber(),"In AgentListener Thread");
 		try {
 			String buf;
 			out = new PrintStream(sock.getOutputStream());
@@ -281,11 +286,11 @@ class AgentListener extends Thread {
 				//parse it
 				agentState = Integer.parseInt(tempbuf);
 				//log to server console
-				System.out.println("agentState is: " + agentState);
+				logger.info(String.format("{%d}: %s", getLineNumber(),"agentState is: " + agentState);
 
 			}
 
-			System.out.println(buf);
+			logger.info(String.format("{%d}: %s", getLineNumber(),buf);
 			//string builder to hold the html response
 			StringBuilder htmlResponse = new StringBuilder();
 			//output first request html to user
@@ -307,15 +312,15 @@ class AgentListener extends Thread {
 			while(true) {
 				sock = servsock.accept();
 				//log a received connection
-				System.out.println("Got a connection to agent at port " + localPort);
+				logger.info(String.format("{%d}: %s", getLineNumber(),"Got a connection to agent at port " + localPort);
 				//connection received. create new agentworker object and start it up!
 				new AgentWorker(sock, localPort, agenthold).start();
 			}
 
 		} catch(IOException ioe) {
 			//this happens when an error occurs OR when we switch port
-			System.out.println("Either connection failed, or just killed listener loop for agent at port " + localPort);
-			System.out.println(ioe);
+			logger.info(String.format("{%d}: %s", getLineNumber(),"Either connection failed, or just killed listener loop for agent at port " + localPort);
+			logger.info(String.format("{%d}: %s", getLineNumber(),ioe);
 		}
 	}
 	//send the html header but NOT the response header
@@ -351,6 +356,11 @@ class AgentListener extends Thread {
 	}
 
 }
+
+public static int getLineNumber() {
+	//Used to put the line numbers inside your log files so if you hit an error somewhere you can identify where that might be
+	return Thread.currentThread().getStackTrace()[2].getLineNumber();
+}
 /**
  *
  * main hostserver class. this listens on port 1565 for requests. at each request,
@@ -367,8 +377,8 @@ public class HostServer {
 		Socket sock;
 
 		ServerSocket servsock = new ServerSocket(port, q_len);
-		System.out.println("John Reagan's DIA Master receiver started at port 1565.");
-		System.out.println("Connect from 1 to 3 browsers using \"http:\\\\localhost:1565\"\n");
+		logger.info(String.format("{%d}: %s", getLineNumber(),"John Reagan's DIA Master receiver started at port 1565.");
+		logger.info(String.format("{%d}: %s", getLineNumber(),"Connect from 1 to 3 browsers using \"http:\\\\localhost:1565\"\n");
 		//listen on port 1565 for new requests OR migrate requests
 		while(true) {
 			//increment nextport! could be more sophisticated, but this will work for now
@@ -376,7 +386,7 @@ public class HostServer {
 			//open socket for requests
 			sock = servsock.accept();
 			//log startup
-			System.out.println("Starting AgentListener at port " + NextPort);
+			logger.info("Starting AgentListener at port " + NextPort);
 			//create new agent listener at this port to wait for requests
 			new AgentListener(sock, NextPort).start();
 		}
