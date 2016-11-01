@@ -161,7 +161,7 @@ class AgentWorker extends Thread {
 			//length and as a result need to build the html response so i can determine its length.
 			StringBuilder htmlString = new StringBuilder(); //create a string builder for the HTML string
 
-			logger.info(String.format("{%d}: %s", getLineNumber(), "Request line: " + inLine);
+			logger.info(String.format("{%d}: %s", getLineNumber(), "Request line: " + inLine));
 
 			if(inLine.indexOf("migrate") > -1) {
 				//TODO: come back to this. the supplied request contains migrate, switch the user to a new port
@@ -183,7 +183,7 @@ class AgentWorker extends Thread {
 				String tempbuf = buf.substring( buf.indexOf("[Port=")+6, buf.indexOf("]", buf.indexOf("[Port=")) ); //create a temporary buffer to store stuff in
 				newPort = Integer.parseInt(tempbuf); //increment the next port here. Not really sure how this is incrementnig here. Will need to come back to it.
 				//TODO: Logger
-				logger.info(String.format("{%d}: %s", getLineNumber(),"newPort is: " + newPort);
+				logger.info(String.format("{%d}: %s", getLineNumber(),"newPort is: " + newPort));
 
 				htmlString.append(AgentListener.sendHTMLheader(newPort, NewHost, inLine)); //send the html header along with some content in the lines below
 				htmlString.append("<h3>We are migrating to host " + newPort + "</h3> \n"); //Migrate to the host server
@@ -191,7 +191,7 @@ class AgentWorker extends Thread {
 				htmlString.append(AgentListener.sendHTMLsubmit());
 
 				//TODO: Logger
-				logger.info(String.format("{%d}: %s", getLineNumber(),"Killing parent listening loop.");
+				logger.info(String.format("{%d}: %s", getLineNumber(),"Killing parent listening loop."));
 				ServerSocket ss = parentAgentHolder.sock; //intialize a a socket for the parentAgentHolder so that we can come back to it later if needed
 				ss.close();//close the port here
 
@@ -219,7 +219,7 @@ class AgentWorker extends Thread {
 
 
 		} catch (IOException ioe) {
-			logger.info(String.format("{%d}: %s", getLineNumber(),ioe);
+			logger.info(String.format("{%d}: %s", getLineNumber(),ioe));
 		}
 	}
 
@@ -247,7 +247,7 @@ class AgentListener extends Thread {
 		BufferedReader in = null;
 		PrintStream out = null;
 		String NewHost = "localhost";
-		logger.info(String.format("{%d}: %s", getLineNumber(),"In AgentListener Thread");
+		logger.info(String.format("{%d}: %s", getLineNumber(),"In AgentListener Thread"));
 		try {
 			String buf;
 			out = new PrintStream(sock.getOutputStream());
@@ -258,11 +258,11 @@ class AgentListener extends Thread {
 			if(buf != null && buf.indexOf("[State=") > -1) { // If there is an active state, store the state for later
 				String tempbuf = buf.substring(buf.indexOf("[State=")+7, buf.indexOf("]", buf.indexOf("[State="))); //store the state to tempbuf
 				agentState = Integer.parseInt(tempbuf); //Set agent state equal to the integer found in the state
-				logger.info(String.format("{%d}: %s", getLineNumber(),"agentState is: " + agentState);
+				logger.info(String.format("{%d}: %s", getLineNumber(),"agentState is: " + agentState));
 
 			}
 
-			logger.info(String.format("{%d}: %s", getLineNumber(),buf);
+			logger.info(String.format("{%d}: %s", getLineNumber(),buf));
 			StringBuilder htmlResponse = new StringBuilder();//string builder to hold the html response
 			htmlResponse.append(sendHTMLheader(localPort, NewHost, buf));
 			htmlResponse.append("Now in Agent Looper starting Agent Listening Loop\n<br />\n");
@@ -276,13 +276,13 @@ class AgentListener extends Thread {
 
 			while(true) {//classic wait for connection
 				sock = servsock.accept();
-				logger.info(String.format("{%d}: %s", getLineNumber(),"Got a connection to agent at port " + localPort);
+				logger.info(String.format("{%d}: %s", getLineNumber(),"Got a connection to agent at port " + localPort));
 				new AgentWorker(sock, localPort, agenthold).start(); //received a connection so create a new worker thread for it
 			}
 
 		} catch(IOException ioe) {
-			logger.info(String.format("{%d}: %s", getLineNumber(),"Either connection failed, or just killed listener loop for agent at port " + localPort);
-			logger.info(String.format("{%d}: %s", getLineNumber(),ioe);
+			logger.info(String.format("{%d}: %s", getLineNumber(),"Either connection failed, or just killed listener loop for agent at port " + localPort));
+			logger.info(String.format("{%d}: %s", getLineNumber(),ioe));
 		}
 	}
 	//send an html header. Similar to what we've done before on the webserver
@@ -333,7 +333,7 @@ public class HostServer {
 		int q_len = 6;
 		int port = 1565;
 		Socket sock;
-
+git
 		ServerSocket servsock = new ServerSocket(port, q_len);
 		logger.info(String.format("{%d}: %s", getLineNumber(),"Tim Natywa's DIA Master receiver started at port 1565.");
 		logger.info(String.format("{%d}: %s", getLineNumber(),"Connect from 1 to 3 browsers using \"http:\\\\localhost:1565\"\n"); //TODO: what happens after the third browser?
