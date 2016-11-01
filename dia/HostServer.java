@@ -91,7 +91,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.logging.Logger;
+import java.util.logging.*;
 /**
  * HostServer Notes: This went pretty smoothly for me, although I did have to edit the HTML functions
  * to get an accurate content length so things would be compatible with browsers other than IE. I also modified
@@ -118,8 +118,7 @@ import java.util.logging.Logger;
 	// My modifications are below:
 	// 		-Modified this to use Logger instead of System.out.print.ln. This way I can come back to the older log files
 	//		-Created a new method to get line number which was included for my calls to logger
-	//
-	//
+
 
 
 
@@ -151,6 +150,19 @@ class AgentWorker extends Thread {
 		BufferedReader fromHostServer; //We will use this variable as our input
 		PrintStream toHostServer; // we will use this variable as our output
 
+
+		try {
+			logFile = new FileHandler("/Users/tnatywa/repo/dia/logs/serverlog.txt"); //You'll need a filehandler to create a log.txt at the specified location i.e tnatywa/desktop/repos/435/threeAssignment/serverlog.txt
+			logger.addHandler(logFile); //TODO: addhandler does what?
+			SimpleFormatter formatter = new SimpleFormatter(); //declare a formatter
+			logFile.setFormatter(formatter); //this just is formatting the filehandler. e.g. providing a timestamp TODO: double check what formatter is doing under the hood
+			logger.info("Log is beginning"); // This will be the beginning of your log everytime a thread starts
+
+		} catch (SecurityException e) { //TODO: figure out securityexception
+			e.printStackTrace();//how can we log this instead?
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		try {
 			out = new PrintStream(sock.getOutputStream());
