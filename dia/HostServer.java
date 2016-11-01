@@ -313,13 +313,14 @@ class AgentListener extends Thread {
 		out.println(html);
 	}
 
-}
+
 
 public static int getLineNumber() {
 	//Used to put the line numbers inside your log files so if you hit an error you can identify where it occured in your log
 	return Thread.currentThread().getStackTrace()[2].getLineNumber();
-}
-/**
+	}
+
+}/**
  *
  * main hostserver class. this listens on port 1565 for requests. at each request,
  * increment NextPort and start a new listener on it. Assumes that all ports >3000
