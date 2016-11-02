@@ -92,6 +92,7 @@ import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.logging.*;
+import java.util.*;
 /**
  * HostServer Notes: This went pretty smoothly for me, although I did have to edit the HTML functions
  * to get an accurate content length so things would be compatible with browsers other than IE. I also modified
@@ -124,11 +125,11 @@ import java.util.logging.*;
 
 class AgentWorker extends Thread {
 
+	Logger logger = Logger.getLogger("agentWorkerLog"); //declares a serverlog
 	Socket sock; //Create a socket called sock so we can connect
 	agentHolder parentAgentHolder; //TODO: Come back to this after you see rest of code
 	int localPort; //which port is being used
-	Logger logger = Logger.getLogger("serverlog"); //declares a serverlog
-	FileHandler logFile; //intializes a FileHandler for logs
+
 
 	AgentWorker (Socket s, int prt, agentHolder ah) { //Create a constructor for the worker
 		sock = s;
@@ -150,20 +151,6 @@ class AgentWorker extends Thread {
 		BufferedReader fromHostServer; //We will use this variable as our input
 		PrintStream toHostServer; // we will use this variable as our output
 
-
-		try {
-			logFile = new FileHandler("/Users/tnatywa/repo/dia/logs/serverlog.txt"); //You'll need a filehandler to create a log.txt at the specified location i.e tnatywa/desktop/repos/435/threeAssignment/serverlog.txt
-			logger.addHandler(logFile); //TODO: addhandler does what?
-			SimpleFormatter formatter = new SimpleFormatter(); //declare a formatter
-			logFile.setFormatter(formatter); //this just is formatting the filehandler. e.g. providing a timestamp TODO: double check what formatter is doing under the hood
-			logger.info("Log is beginning"); // This will be the beginning of your log everytime a thread starts
-
-		} catch (SecurityException e) { //TODO: figure out securityexception
-			e.printStackTrace();//how can we log this instead?
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
 		try {
 			out = new PrintStream(sock.getOutputStream());
 			in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
@@ -172,8 +159,7 @@ class AgentWorker extends Thread {
 			//to allow for usage on non-ie browsers, I had to accurately determine the content
 			//length and as a result need to build the html response so i can determine its length.
 			StringBuilder htmlString = new StringBuilder(); //create a string builder for the HTML string
-
-			logger.info(String.format("{%d}: %s", getLineNumber(), "Request line: " + inLine));
+			logger.info(String.format("{%d}: %s", logByLineNumber.getLineNumber(), "Request line: " + inLine));
 
 			if(inLine.indexOf("migrate") > -1) {
 				//TODO: come back to this. the supplied request contains migrate, switch the user to a new port
@@ -195,7 +181,7 @@ class AgentWorker extends Thread {
 				String tempbuf = buf.substring( buf.indexOf("[Port=")+6, buf.indexOf("]", buf.indexOf("[Port=")) ); //create a temporary buffer to store stuff in
 				newPort = Integer.parseInt(tempbuf); //increment the next port here. Not really sure how this is incrementnig here. Will need to come back to it.
 				//TODO: Logger
-				logger.info(String.format("{%d}: %s", getLineNumber(),"newPort is: " + newPort));
+				logger.info(String.format("{%d}: %s", logByLineNumber.getLineNumber(),"newPort is: " + newPort));
 
 				htmlString.append(AgentListener.sendHTMLheader(newPort, NewHost, inLine)); //send the html header along with some content in the lines below
 				htmlString.append("<h3>We are migrating to host " + newPort + "</h3> \n"); //Migrate to the host server
@@ -203,7 +189,7 @@ class AgentWorker extends Thread {
 				htmlString.append(AgentListener.sendHTMLsubmit());
 
 				//TODO: Logger
-				logger.info(String.format("{%d}: %s", getLineNumber(),"Killing parent listening loop."));
+				logger.info(String.format("{%d}: %s", logByLineNumber.getLineNumber(),"Killing parent listening loop."));
 				ServerSocket ss = parentAgentHolder.sock; //intialize a a socket for the parentAgentHolder so that we can come back to it later if needed
 				ss.close();//close the port here
 
@@ -231,14 +217,23 @@ class AgentWorker extends Thread {
 
 
 		} catch (IOException ioe) {
-			logger.info(String.format("{%d}: %s", getLineNumber(),ioe));
+			logger.info(String.format("{%d}: %s", logByLineNumber.getLineNumber(),ioe));
 		}
 	}
 
 }
 
+class logByLineNumber {
+
+	public static int getLineNumber() {
+		//Used to put the line numbers inside your log files so if you hit an error you can identify where it occured in your log
+		return Thread.currentThread().getStackTrace()[2].getLineNumber();
+		}
+}
+
 class agentHolder {
 	//Will be holding the state of the agent
+	Logger logger = Logger.getLogger("agentHolderLog"); //declares a serverlog
 	ServerSocket sock;
 	int agentState;
 	agentHolder(ServerSocket s) { sock = s;}
@@ -248,6 +243,7 @@ class agentHolder {
 class AgentListener extends Thread {
 	Socket sock;
 	int localPort;
+	Logger logger = Logger.getLogger("agentListenerLog"); //declares a serverlog
 
 	AgentListener(Socket As, int prt) {
 		sock = As;
@@ -259,7 +255,7 @@ class AgentListener extends Thread {
 		BufferedReader in = null;
 		PrintStream out = null;
 		String NewHost = "localhost";
-		logger.info(String.format("{%d}: %s", getLineNumber(),"In AgentListener Thread"));
+		logger.info(String.format("{%d}: %s", logByLineNumber.getLineNumber(),"In AgentListener Thread"));
 		try {
 			String buf;
 			out = new PrintStream(sock.getOutputStream());
@@ -270,11 +266,11 @@ class AgentListener extends Thread {
 			if(buf != null && buf.indexOf("[State=") > -1) { // If there is an active state, store the state for later
 				String tempbuf = buf.substring(buf.indexOf("[State=")+7, buf.indexOf("]", buf.indexOf("[State="))); //store the state to tempbuf
 				agentState = Integer.parseInt(tempbuf); //Set agent state equal to the integer found in the state
-				logger.info(String.format("{%d}: %s", getLineNumber(),"agentState is: " + agentState));
+				logger.info(String.format("{%d}: %s", logByLineNumber.getLineNumber(),"agentState is: " + agentState));
 
 			}
 
-			logger.info(String.format("{%d}: %s", getLineNumber(),buf));
+			logger.info(String.format("{%d}: %s", logByLineNumber.getLineNumber(),buf));
 			StringBuilder htmlResponse = new StringBuilder();//string builder to hold the html response
 			htmlResponse.append(sendHTMLheader(localPort, NewHost, buf));
 			htmlResponse.append("Now in Agent Looper starting Agent Listening Loop\n<br />\n");
@@ -288,13 +284,13 @@ class AgentListener extends Thread {
 
 			while(true) {//classic wait for connection
 				sock = servsock.accept();
-				logger.info(String.format("{%d}: %s", getLineNumber(),"Got a connection to agent at port " + localPort));
+				logger.info(String.format("{%d}: %s", logByLineNumber.getLineNumber(),"Got a connection to agent at port " + localPort));
 				new AgentWorker(sock, localPort, agenthold).start(); //received a connection so create a new worker thread for it
 			}
 
 		} catch(IOException ioe) {
-			logger.info(String.format("{%d}: %s", getLineNumber(),"Either connection failed, or just killed listener loop for agent at port " + localPort));
-			logger.info(String.format("{%d}: %s", getLineNumber(),ioe));
+			logger.info(String.format("{%d}: %s", logByLineNumber.getLineNumber(),"Either connection failed, or just killed listener loop for agent at port " + localPort));
+			logger.info(String.format("{%d}: %s", logByLineNumber.getLineNumber(),ioe));
 		}
 	}
 	//send an html header. Similar to what we've done before on the webserver
@@ -325,13 +321,6 @@ class AgentListener extends Thread {
 		out.println(html);
 	}
 
-
-
-public static int getLineNumber() {
-	//Used to put the line numbers inside your log files so if you hit an error you can identify where it occured in your log
-	return Thread.currentThread().getStackTrace()[2].getLineNumber();
-	}
-
 }/**
  *
  * main hostserver class. this listens on port 1565 for requests. at each request,
@@ -341,14 +330,30 @@ public static int getLineNumber() {
 public class HostServer {
 	//we start listening on port 3001
 	public static int NextPort = 3000;
+	static Logger logger = Logger.getLogger("hostServerLog"); //declares a serverlog
+	static FileHandler logFile; //intializes a FileHandler for logs
 
 	public static void main(String[] a) throws IOException {
 		int q_len = 6;
 		int port = 1565;
 		Socket sock;
 		ServerSocket servsock = new ServerSocket(port, q_len);
-		logger.info(String.format("{%d}: %s", getLineNumber(),"Tim Natywa's DIA Master receiver started at port 1565."));
-		logger.info(String.format("{%d}: %s", getLineNumber(),"Connect from 1 to 3 browsers using \"http://localhost:1565\"\n")); //TODO: what happens after the third browser?
+
+		try {
+			logFile = new FileHandler("/Users/tnatywa/repo/dia/logs/mainLog.txt"); //You'll need a filehandler to create a log.txt at the specified location i.e tnatywa/desktop/repos/435/threeAssignment/serverlog.txt
+			logger.addHandler(logFile); //TODO: addhandler does what?
+			SimpleFormatter formatter = new SimpleFormatter(); //declare a formatter
+			logFile.setFormatter(formatter); //this just is formatting the filehandler. e.g. providing a timestamp TODO: double check what formatter is doing under the hood
+			logger.info("Log is beginning"); // This will be the beginning of your log everytime a thread starts
+
+		} catch (SecurityException e) { //TODO: figure out securityexception
+			e.printStackTrace();//how can we log this instead?
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		logger.info(String.format("{%d}: %s", logByLineNumber.getLineNumber(),"Tim Natywa's DIA Master receiver started at port 1565."));
+		logger.info(String.format("{%d}: %s", logByLineNumber.getLineNumber(),"Connect from 1 to 3 browsers using \"http://localhost:1565\"\n")); //TODO: what happens after the third browser?
 		while(true) { //listen for a request
 			//increment nextport! could be more sophisticated, but this will work for now. TODO: Figure out a better implementation
 			NextPort = NextPort + 1;
@@ -356,6 +361,5 @@ public class HostServer {
 			logger.info("Starting AgentListener at port " + NextPort);
 			new AgentListener(sock, NextPort).start(); //start up an agent listener to receive new requests
 		}
-
 	}
 }
