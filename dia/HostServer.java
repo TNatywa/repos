@@ -348,7 +348,7 @@ public class HostServer {
 		Socket sock;
 		ServerSocket servsock = new ServerSocket(port, q_len);
 		logger.info(String.format("{%d}: %s", getLineNumber(),"Tim Natywa's DIA Master receiver started at port 1565."));
-		logger.info(String.format("{%d}: %s", getLineNumber(),"Connect from 1 to 3 browsers using \"http:\\\\localhost:1565\"\n")); //TODO: what happens after the third browser?
+		logger.info(String.format("{%d}: %s", getLineNumber(),"Connect from 1 to 3 browsers using \"http://localhost:1565\"\n")); //TODO: what happens after the third browser?
 		while(true) { //listen for a request
 			//increment nextport! could be more sophisticated, but this will work for now. TODO: Figure out a better implementation
 			NextPort = NextPort + 1;
